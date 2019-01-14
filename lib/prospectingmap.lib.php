@@ -118,7 +118,7 @@ function prospectingmap_set_map_location($db, $socid, $longitude, $latitude, &$e
  */
 function prospectingmap_del_map_location($db, $socid, &$error_msg) {
     if ($socid > 0) {
-        $sql = "DELETE FROM ".MAIN_DB_PREFIX."prospectingmap_coordinate WHERE fk_socs = " . $socid;
+        $sql = "DELETE FROM ".MAIN_DB_PREFIX."prospectingmap_coordinate WHERE fk_soc = " . $socid;
         $resql = $db->query($sql);
         if (!$resql) {
             $error_msg = $db->lasterror();
