@@ -1,0 +1,35 @@
+# Dolibarr language file - en_US - prospectingmap
+CHARSET=UTF-8
+Module163021Name = Prospecting Map
+Module163021Desc = Module pour l'affichage sur une carte des tiers. (avec filtrage par status de prospection)
+
+#######################################################################
+# Configuration admin
+#######################################################################
+ProspectingMapSetup                             = Configuration of the module "Prospecting Map"
+
+ProspectingMapSettings                          = Configuration de la carte
+ProspectingMapShowMapIntoCompanyCard            = Voir la carte avec l'emplacement du tiers sur sa fiche (si il est définie)
+ProspectingMapMainLayerMap                      = Choix du Modèle de la carte de fond
+
+ProspectingMapSearchCoordinatesSettings         = Configuration pour la récupération des coordonnées depuis l'adresse du tiers
+ProspectingMapSearchCoordinatesUrlAddress       = Adresse URL vers le site de récupération des coordonnées
+ProspectingMapSearchCoordinatesUrlParameters    = Paramètres de recherche (la balise __ADDRESS__ sera remplacer par l'adresse du tiers)
+ProspectingMapSearchCoordinatesRequestMode      = Mode d'envoie des paramètres de recherche
+
+#######################################################################
+# General
+#######################################################################
+ProspectingMapMapOfProspects    = Carte de prospection
+ProspectingMapLocation          = Localisation
+ProspectingMapEditLocation      = Edition manuel de la localisation
+ProspectingMapEndEditLocation   = Terminer l'édition manuel de la localisation
+ProspectingMapGetLocation       = Récupérer la localisation
+ProspectingMapRegion            = Région
+
+#######################################################################
+# Dictionaries
+#######################################################################
+ProspectingMapRegionDictionaryLabel         = Liste des régions personalisées
+ProspectingMapRegionDictionaryDepartment    = Départements
+ProspectingMapSTCommDictionaryColorHelp     = La couleur doit être au format HTML (Ex: #FF0000)
