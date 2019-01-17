@@ -183,6 +183,11 @@ class ProspectingMapSTCommDictionary extends Dictionary
     public $rowid_field = 'id';
 
     /**
+     * @var bool    Is rowid auto increment (false: rowid = 'last rowid in the table' + 1)
+     */
+    public $is_rowid_auto_increment = false;
+
+    /**
      * @var bool    Use entity field
      */
     public $has_entity = false;
