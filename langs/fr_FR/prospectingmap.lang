@@ -26,7 +26,6 @@ ProspectingMapEditLocation      = Edition manuelle de la localisation
 ProspectingMapEndEditLocation   = Terminer l'édition manuelle de la localisation
 ProspectingMapGetLocation       = Récupérer la localisation
 ProspectingMapRegion            = Région
-StatusProsp						= Statut de prospection
 
 #######################################################################
 # Dictionaries
