@@ -201,7 +201,7 @@ $moreforfilter.=$langs->trans('ProspectingMapRegion'). ': ';
 $moreforfilter.=multiselect_javascript_code($search_state, 'search_state');
 $save_conf = $conf->use_javascript_ajax;
 $conf->use_javascript_ajax = 0;
-$moreforfilter.=$formdictionary->select_dictionary('prospectingmap', 'prospectingmapregion', '','search_state', 1, 'rowid', '{{label}}', array(), array(), 0, array(), 0, 0, 'minwidth300 maxwidth300');
+$moreforfilter.=$formdictionary->select_dictionary('prospectingmap', 'prospectingmapregion', '', 'search_state', '', 'rowid', '{{label}}', array(), array('label'=>'ASC'), 0, array(), 0, 0, 'minwidth300 maxwidth300');
 $conf->use_javascript_ajax = $save_conf;
 $moreforfilter.='</div>';
 

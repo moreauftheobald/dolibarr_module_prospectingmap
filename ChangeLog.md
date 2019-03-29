@@ -3,9 +3,9 @@ Le format du fichier est basé sur [Tenez un ChangeLog](http://keepachangelog.co
 
 ## [Non Distribué]
 
-## [4.0.1] - 17-01-2019
-### Ajouter
-- Correction pour la compatibilité avec la version 4.0.7 du module AdvanceDictionaries.
+## [4.0.1] - 29-03-2019
+- Compatibilité avec AdvancedDictionaries v.4.0.4.
+- Correction fichier de langue.
 
 ## [4.0.0] - 10-09-2018
 - Version initial.
