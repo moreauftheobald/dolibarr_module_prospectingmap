@@ -69,7 +69,8 @@ class ActionsProspectingMap
             $icon = dol_buildpath('/prospectingmap/img/dot.png', 1);
             if (($action == 'create' || $action == 'edit') &&
                 ((isset($_GET['map_longitude']) || isset($_POST['map_longitude'])) ||
-                (isset($_GET['map_latitude']) || isset($_POST['map_latitude'])))) {
+                    (isset($_GET['map_latitude']) || isset($_POST['map_latitude'])))
+            ) {
                 $longitude = GETPOST('map_longitude', 'int');
                 $latitude = GETPOST('map_latitude', 'int');
             } else {
@@ -80,7 +81,8 @@ class ActionsProspectingMap
             }
 
             if ($action != 'create' && $action != 'edit' &&
-                (!isset($longitude) || !isset($longitude) || empty($conf->global->PROSPECTINGMAP_SHOW_MAP_INTO_COMPANY_CARD)))
+                (!isset($longitude) || !isset($longitude) || empty($conf->global->PROSPECTINGMAP_SHOW_MAP_INTO_COMPANY_CARD))
+            )
                 return 0;
 
             if ($action == 'create' || $action == 'edit') {
@@ -118,6 +120,9 @@ HTML;
                 parse_str($conf->global->PROSPECTINGMAP_SEARCH_COORDINATES_URL_PARAMETERS, $parameters);
                 $datas = json_encode($parameters);
                 $requestMode = $conf->global->PROSPECTINGMAP_SEARCH_COORDINATES_REQUEST_MODE;
+                $useJqueryBlockUi = !empty($conf->global->MAIN_USE_JQUERY_BLOCKUI) ? "true" : "false";
+                $errorLabelGetPosition = dol_escape_js($langs->trans('ProspectingMapErrorGetPosition'));
+                $errorLabelGetPositionNotFound = dol_escape_js($langs->trans('ProspectingMapErrorGetPositionNotFound'));
 
                 print <<<HTML
                     var _edit_map_location = false;
@@ -178,12 +183,26 @@ HTML;
                         } else {
                           console.log('ProspectingMap: Address not found: ' + full_address);
                           set_map_location([0, 0]);
-                          // todo show not found error
+
+                          var error_msg = "$errorLabelGetPositionNotFound : " + full_address;
+                          if ($useJqueryBlockUi) {
+                            $.dolEventValid("",error_msg);
+                          } else {
+                            /* jnotify(message, preset of message type, keepmessage) */
+                            $.jnotify(error_msg, "error", 'true', { remove: function (){} } );
+                          }
                         }
                       }).fail(function(jqxhr, textStatus, error) {
                           console.log('ProspectingMap: ' + error);
                           set_map_location([0, 0]);
-                          // todo show error
+                          
+                          var error_msg = "$errorLabelGetPosition : " + error;
+                          if ($useJqueryBlockUi) {
+                            $.dolEventValid("",error_msg);
+                          } else {
+                            /* jnotify(message, preset of message type, keepmessage) */
+                            $.jnotify(error_msg, "error", 'true', { remove: function (){} } );
+                          }
                       });
                     });
 HTML;

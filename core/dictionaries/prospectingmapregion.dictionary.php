@@ -205,7 +205,7 @@ class ProspectingMapRegionDictionaryLine extends DictionaryLine
    	 * @param  int     $objectid       Current object id
    	 * @return string
    	 */
-   	function showInputField($fieldName, $value=null, $keyprefix='', $keysuffix='', $objectid=0)
+   	function showInputFieldAD($fieldName, $value=null, $keyprefix='', $keysuffix='', $objectid=0)
     {
         global $conf;
 
@@ -227,6 +227,6 @@ class ProspectingMapRegionDictionaryLine extends DictionaryLine
             return $out;
         }
 
-        return parent::showInputField($fieldName, $value, $keyprefix, $keysuffix, $objectid);
+        return parent::showInputFieldAD($fieldName, $value, $keyprefix, $keysuffix, $objectid);
     }
 }

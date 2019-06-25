@@ -33,3 +33,10 @@ ProspectingMapRegion            = Région
 ProspectingMapRegionDictionaryLabel         = Liste des régions personnalisées
 ProspectingMapRegionDictionaryDepartment    = Départements
 ProspectingMapSTCommDictionaryColorHelp     = La couleur doit être au format HTML (Ex: #FF0000)
+
+#######################################################################
+# Errors
+#######################################################################
+ProspectingMapErrorAdvanceDictionariesNotFound   = Le module Advanced Dictionaries est introuvable.
+ProspectingMapErrorGetPosition                   = Une erreur c'est produite lors de la récupération de la position
+ProspectingMapErrorGetPositionNotFound           = L'adresse suivante n'a pas été trouvée
