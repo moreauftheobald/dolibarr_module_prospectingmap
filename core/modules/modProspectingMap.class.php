@@ -54,13 +54,13 @@ class modProspectingMap extends DolibarrModules
         // Key text used to identify module (for permissions, menus, etc...)
         $this->rights_class = 'prospectingmap';
 
+        $family = (!empty($conf->global->EASYA_VERSION) ? 'easya' : 'opendsi');
         // Family can be 'crm','financial','hr','projects','products','ecm','technic','interface','other'
         // It is used to group modules by family in module setup page
-        $this->family = "opendsi";
-        // Module position in the family
-        $this->module_position = 500;
+        $this->family = $family;
         // Gives the possibility to the module, to provide his own family info and position of this family (Overwrite $this->family and $this->module_position. Avoid this)
-        $this->familyinfo = array('opendsi' => array('position' => '001', 'label' => $langs->trans("OpenDsiFamily")));
+        $this->familyinfo = array($family => array('position' => '001', 'label' => $langs->trans($family . 'Family')));
+
         // Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
         $this->special = 0;
 
@@ -73,7 +73,7 @@ class modProspectingMap extends DolibarrModules
         $this->editor_url = 'http://www.open-dsi.fr';
 
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '4.0.2';
+        $this->version = '4.0.3';
         // Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
         $this->const_name = 'MAIN_MODULE_' . strtoupper($this->name);
         // Name of image file used for this module.
@@ -103,7 +103,7 @@ class modProspectingMap extends DolibarrModules
         $this->module_parts = array(
             'dictionaries' => 1,
             'triggers' => 1,
-            'hooks' => array('thirdpartycard'),
+            'hooks' => array('thirdpartycard', 'thirdpartylist'),
         );
 
         // Data directories to create when module is enabled.

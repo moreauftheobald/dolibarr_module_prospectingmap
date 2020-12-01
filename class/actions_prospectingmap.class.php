@@ -41,6 +41,102 @@ class ActionsProspectingMap
     public $resprints;
 
     /**
+     * Selected fields
+     *
+     * @var null
+     */
+    private $_selectedFieldList = null;
+
+    /**
+     * At least one coordinate field selected
+     *
+     * @var null
+     */
+    private $_coordinateFieldSelected = null;
+
+    /**
+     * Coordinate field list
+     *
+     * @var string[]
+     */
+    private static $_coordinateFieldList = array(
+        'pm_coordinate.longitude',
+        'pm_coordinate.latitude'
+    );
+
+
+    /**
+     * Get selected field list
+     *
+     * @return array|false|string[]|null
+     */
+    private function _getSelectedFieldList() {
+        global $contextpage, $user;
+
+        if ($this->_selectedFieldList === null) {
+            $this->_selectedFieldList = array();
+
+            $tmpVar = 'MAIN_SELECTEDFIELDS_' . (empty($contextpage) ? $_SERVER['PHP_SELF'] : $contextpage);
+            if (!empty($user->conf->$tmpVar)) {
+                $this->_selectedFieldList = explode(',', $user->conf->$tmpVar);
+            }
+        }
+
+        return $this->_selectedFieldList;
+    }
+
+    /**
+     * Check if at least on coordinate field is selected
+     *
+     * @return bool|null
+     */
+    private function _coordinateFieldListInSelectedFieldList() {
+        global $sortfield;
+
+        if ($this->_coordinateFieldSelected === null) {
+            $this->_coordinateFieldSelected = false;
+            $coordinateFieldList = self::$_coordinateFieldList;
+
+            if (in_array(trim($sortfield), $coordinateFieldList)) {
+                $this->_coordinateFieldSelected = true;
+            } else {
+                $selectedFieldList = $this->_getSelectedFieldList();
+                foreach ($coordinateFieldList as $coordinateField) {
+                    if (in_array($coordinateField, $selectedFieldList)) {
+                        $this->_coordinateFieldSelected = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $this->_coordinateFieldSelected;
+    }
+
+    /**
+     * Enable coordinate field
+     *
+     * @return bool
+     */
+    private function _coordinateFieldEnable() {
+        global $conf;
+
+        $enable = false;
+
+        // /!\ Need "printFieldListFrom" hook in company list (PR 15564)
+        if (!empty($conf->prospectingmap->enabled)) {
+            if (!empty($conf->global->EASYA_VERSION) && version_compare($conf->global->EASYA_VERSION, '2020.9', '>=')) {
+                $enable = true;
+            }
+//            elseif (version_compare(DOL_VERSION, '14.0.0', '>=')) {
+//                $enable = true;
+//            }
+        }
+
+        return $enable;
+    }
+
+    /**
      * Constructor
      *
      * @param        DoliDB $db Database handler
@@ -48,6 +144,66 @@ class ActionsProspectingMap
     public function __construct($db)
     {
         $this->db = $db;
+    }
+
+    /**
+     * Overloading the addMoreMassActions function : replacing the parent's function with the one below
+     *
+     * @param   array           $parameters     Hook metadatas (context, etc...)
+     * @param   CommonObject    &$object        The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+     * @param   string          &$action        Current action (if set). Generally create or edit or null
+     * @param   HookManager     $hookmanager    Hook manager propagated to allow calling another hook
+     * @return  int             < 0 on error, 0 on success, 1 to replace standard code
+     */
+    function addMoreMassActions($parameters, &$object, &$action, $hookmanager)
+    {
+        $context = explode(':', $parameters['context']);
+
+        if (in_array('thirdpartylist', $context)) {
+            global $param;
+
+            // Longitude
+            $searchPMCoordinateLongitude = GETPOST('search_pm_coordinate_longitude', 'alpha');
+            if ($searchPMCoordinateLongitude != '') $param .= '&search_pm_coordinate_longitude=' . urlencode($searchPMCoordinateLongitude);
+            // Latitude
+            $searchPMCoordinateLatitude = GETPOST('search_pm_coordinate_latitude', 'alpha');
+            if ($searchPMCoordinateLatitude != '') $param .= '&search_pm_coordinate_latitude=' . urlencode($searchPMCoordinateLatitude);
+        }
+
+        return 0;
+    }
+
+    /**
+     * Overloading the doActions function : replacing the parent's function with the one below
+     *
+     * @param   array           $parameters     Hook metadatas (context, etc...)
+     * @param   CommonObject    &$object        The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+     * @param   string          &$action        Current action (if set). Generally create or edit or null
+     * @param   HookManager     $hookmanager    Hook manager propagated to allow calling another hook
+     * @return  int             < 0 on error, 0 on success, 1 to replace standard code
+     */
+    function doActions($parameters, &$object, &$action, $hookmanager)
+    {
+        global $conf, $langs;
+
+        $context = explode(':', $parameters['context']);
+
+        if (in_array('thirdpartylist', $context)) {
+            global $arrayfields;
+
+            // Longitude
+            $arrayfields['pm_coordinate.longitude'] = array('label' => $langs->trans('ProspectingMapLongitude'), 'checked' => 0, 'position' => 600, 'enabled' => $this->_coordinateFieldEnable());
+            // Latitude
+            $arrayfields['pm_coordinate.latitude']  = array('label' => $langs->trans('ProspectingMapLatitude'),  'checked' => 0, 'position' => 601, 'enabled' => $this->_coordinateFieldEnable());
+
+            // remove filters
+            if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x', 'alpha') || GETPOST('button_removefilter', 'alpha')) {
+                $_GET['search_pm_coordinate_longitude'] = '';
+                $_GET['search_pm_coordinate_latitude']  = '';
+            }
+        }
+
+        return 0;
     }
 
     /**
@@ -290,6 +446,175 @@ HTML;
                   });
                 </script>
 HTML;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Overloading the printFieldListSelect function : replacing the parent's function with the one below
+     *
+     * @param   array           $parameters     Hook metadatas (context, etc...)
+     * @param   CommonObject    &$object        The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+     * @param   string          &$action        Current action (if set). Generally create or edit or null
+     * @param   HookManager     $hookmanager    Hook manager propagated to allow calling another hook
+     * @return  int             < 0 on error, 0 on success, 1 to replace standard code
+     */
+    function printFieldListSelect($parameters, &$object, &$action, $hookmanager)
+    {
+        $context = explode(':', $parameters['context']);
+
+        if (in_array('thirdpartylist', $context)) {
+            if ($this->_coordinateFieldListInSelectedFieldList() === true) {
+                $resPrints = ', pm_coordinate.longitude, pm_coordinate.latitude';
+                $this->resprints = $resPrints;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Overloading the printFieldListFrom function : replacing the parent's function with the one below
+     *
+     * @param   array           $parameters     Hook metadatas (context, etc...)
+     * @param   CommonObject    &$object        The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+     * @param   string          &$action        Current action (if set). Generally create or edit or null
+     * @param   HookManager     $hookmanager    Hook manager propagated to allow calling another hook
+     * @return  int             < 0 on error, 0 on success, 1 to replace standard code
+     */
+    function printFieldListFrom($parameters, &$object, &$action, $hookmanager)
+    {
+        $context = explode(':', $parameters['context']);
+
+        if (in_array('thirdpartylist', $context)) {
+            if ($this->_coordinateFieldListInSelectedFieldList() === true) {
+                $resPrints = " LEFT JOIN " . MAIN_DB_PREFIX . "prospectingmap_coordinate as pm_coordinate ON pm_coordinate.fk_soc = s.rowid";
+                $this->resprints = $resPrints;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Overloading the printFieldListWhere function : replacing the parent's function with the one below
+     *
+     * @param   array           $parameters     Hook metadatas (context, etc...)
+     * @param   CommonObject    &$object        The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+     * @param   string          &$action        Current action (if set). Generally create or edit or null
+     * @param   HookManager     $hookmanager    Hook manager propagated to allow calling another hook
+     * @return  int             < 0 on error, 0 on success, 1 to replace standard code
+     */
+    function printFieldListWhere($parameters, &$object, &$action, $hookmanager)
+    {
+        $context = explode(':', $parameters['context']);
+
+        if (in_array('thirdpartylist', $context)) {
+            if ($this->_coordinateFieldListInSelectedFieldList() === true) {
+                $searchPMCoordinateLongitude = GETPOST('search_pm_coordinate_longitude', 'alpha');
+                $searchPMCoordinateLatitude = GETPOST('search_pm_coordinate_latitude', 'alpha');
+
+                $out = '';
+                // Longitude
+                if ($searchPMCoordinateLongitude) $out .= natural_search('pm_coordinate.longitude', $searchPMCoordinateLongitude);
+                // Longitude
+                if ($searchPMCoordinateLatitude) $out .= natural_search('pm_coordinate.longitude', $searchPMCoordinateLatitude);
+
+                $this->resprints = $out;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Overloading the printFieldListOption function : replacing the parent's function with the one below
+     *
+     * @param   array           $parameters     Hook metadatas (context, etc...)
+     * @param   CommonObject    &$object        The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+     * @param   string          &$action        Current action (if set). Generally create or edit or null
+     * @param   HookManager     $hookmanager    Hook manager propagated to allow calling another hook
+     * @return  int             < 0 on error, 0 on success, 1 to replace standard code
+     */
+    function printFieldListOption($parameters, &$object, &$action, $hookmanager)
+    {
+        $context = explode(':', $parameters['context']);
+
+        if (in_array('thirdpartylist', $context)) {
+            global $arrayfields;
+
+            // Longitude
+            if (!empty($arrayfields['pm_coordinate.longitude']['checked'])) {
+                $searchPMCoordinateLongitude = GETPOST('search_pm_coordinate_longitude', 'alpha');
+                print '<td class="liste_titre">';
+                print '<input class="flat" type="text" name="search_pm_coordinate_longitude" size="8" value="' . dol_escape_htmltag($searchPMCoordinateLongitude) . '">';
+                print '</td>';
+            }
+            // Latitude
+            if (!empty($arrayfields['pm_coordinate.latitude']['checked'])) {
+                $searchPMCoordinateLatitude  = GETPOST('search_pm_coordinate_latitude', 'alpha');
+                print '<td class="liste_titre">';
+                print '<input class="flat" type="text" name="search_pm_coordinate_latitude" size="8" value="' . dol_escape_htmltag($searchPMCoordinateLatitude) . '">';
+                print '</td>';
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Overloading the printFieldListTitle function : replacing the parent's function with the one below
+     *
+     * @param   array           $parameters     Hook metadatas (context, etc...)
+     * @param   CommonObject    &$object        The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+     * @param   string          &$action        Current action (if set). Generally create or edit or null
+     * @param   HookManager     $hookmanager    Hook manager propagated to allow calling another hook
+     * @return  int             < 0 on error, 0 on success, 1 to replace standard code
+     */
+    function printFieldListTitle($parameters, &$object, &$action, $hookmanager)
+    {
+        $context = explode(':', $parameters['context']);
+        if (in_array('thirdpartylist', $context)) {
+            global $arrayfields, $begin, $param, $sortfield, $sortorder;
+
+            // Longitude
+            if (!empty($arrayfields['pm_coordinate.longitude']['checked'])) print_liste_field_titre($arrayfields['pm_coordinate.longitude']['label'], $_SERVER['PHP_SELF'], 'pm_coordinate.longitude', $begin, $param, 'align="center"', $sortfield, $sortorder);
+            // Latitude
+            if (!empty($arrayfields['pm_coordinate.latitude']['checked']))  print_liste_field_titre($arrayfields['pm_coordinate.latitude']['label'], $_SERVER['PHP_SELF'], 'pm_coordinate.latitude', $begin, $param, 'align="center"', $sortfield, $sortorder);
+        }
+
+        return 0;
+    }
+
+    /**
+     * Overloading the printFieldListValue function : replacing the parent's function with the one below
+     *
+     * @param   array           $parameters     Hook metadatas (context, etc...)
+     * @param   CommonObject    &$object        The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+     * @param   string          &$action        Current action (if set). Generally create or edit or null
+     * @param   HookManager     $hookmanager    Hook manager propagated to allow calling another hook
+     * @return  int             < 0 on error, 0 on success, 1 to replace standard code
+     */
+    function printFieldListValue($parameters, &$object, &$action, $hookmanager)
+    {
+        $context = explode(':', $parameters['context']);
+
+        if (in_array('thirdpartylist', $context)) {
+            global $arrayfields, $i, $totalarray, $obj;
+
+            // Longitude
+            if (!empty($arrayfields['pm_coordinate.longitude']['checked'])) {
+                print '<td align="center">' . $obj->longitude . '</td>';
+                if (!$i) $totalarray['nbfield']++;
+            }
+
+            // Latitude
+            if (!empty($arrayfields['pm_coordinate.latitude']['checked'])) {
+                // Cache categories
+                print '<td align="center">' . $obj->latitude . '</td>';
+                if (!$i) $totalarray['nbfield']++;
+            }
         }
 
         return 0;

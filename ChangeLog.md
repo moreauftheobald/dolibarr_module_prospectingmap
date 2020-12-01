@@ -3,6 +3,9 @@ Le format du fichier est basé sur [Tenez un ChangeLog](http://keepachangelog.co
 
 ## [Non Distribué]
 
+## [4.0.3] - 30-11-2020
+- Ajout des colonnes de "Longitude" et "Latitude" sur la liste des tiers (uniquement si hook "printFieldListFrom" présente sur liste des tiers).
+
 ## [4.0.2] - 25-06-2019
 - Correction du bug si l'on essaye d'activer le module sans la présence du module Advanced Dictionaries.
 - Affichage d'un message si la position de l'adresse n'est pas trouvée ou si une erreur c'est produite.
@@ -14,7 +17,8 @@ Le format du fichier est basé sur [Tenez un ChangeLog](http://keepachangelog.co
 ## [4.0.0] - 10-09-2018
 - Version initial.
 
-[Non Distribué]: http://git.open-dsi.fr/dolibarr-extension/graylog/compare/v4.0.2...HEAD
+[Non Distribué]: http://git.open-dsi.fr/dolibarr-extension/graylog/compare/v4.0.3...HEAD
+[4.0.3]: http://git.open-dsi.fr/dolibarr-extension/graylog/commits/v4.0.3
 [4.0.2]: http://git.open-dsi.fr/dolibarr-extension/graylog/commits/v4.0.2
 [4.0.1]: http://git.open-dsi.fr/dolibarr-extension/graylog/commits/v4.0.1
 [4.0.0]: http://git.open-dsi.fr/dolibarr-extension/graylog/commits/v4.0.0
