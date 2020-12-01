@@ -131,6 +131,9 @@ class ActionsProspectingMap
 //            elseif (version_compare(DOL_VERSION, '14.0.0', '>=')) {
 //                $enable = true;
 //            }
+            elseif (!empty($conf->global->PROSPECTINGMAP_FORCE_COORDINATES_IN_COMPANY_LIST)) {
+                $enable = true;
+            }
         }
 
         return $enable;
