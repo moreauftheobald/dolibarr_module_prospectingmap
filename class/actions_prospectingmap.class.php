@@ -125,15 +125,15 @@ class ActionsProspectingMap
 
         // /!\ Need "printFieldListFrom" hook in company list (PR 15564)
         if (!empty($conf->prospectingmap->enabled)) {
-            if (!empty($conf->global->EASYA_VERSION) && version_compare($conf->global->EASYA_VERSION, '2020.9', '>=')) {
+            if (!empty($conf->global->PROSPECTINGMAP_FORCE_COORDINATES_IN_COMPANY_LIST)) {
+                $enable = true;
+            }
+            elseif (!empty($conf->global->EASYA_VERSION) && version_compare($conf->global->EASYA_VERSION, '2020.9', '>=')) {
                 $enable = true;
             }
 //            elseif (version_compare(DOL_VERSION, '14.0.0', '>=')) {
 //                $enable = true;
 //            }
-            elseif (!empty($conf->global->PROSPECTINGMAP_FORCE_COORDINATES_IN_COMPANY_LIST)) {
-                $enable = true;
-            }
         }
 
         return $enable;
