@@ -330,6 +330,10 @@ HTML;
                       
                       $.map(datas, function (value, index) {
                         datas[index] = value.replace('__ADDRESS__', full_address);
+                        datas[index] = value.replace('__ADDRES__', address);
+                        datas[index] = value.replace('__TOWN__', town);
+                        datas[index] = value.replace('__ZIP__', zip);
+                        datas[index] = value.replace('__COUNTRY__', country);
                       });
 
                       $.ajax(url, {
