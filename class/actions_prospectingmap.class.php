@@ -330,9 +330,21 @@ HTML;
                       
                       $.map(datas, function (value, index) {
                         datas[index] = value.replace('__ADDRESS__', full_address);
+                      });
+
+                      $.map(datas, function (value, index) {
                         datas[index] = value.replace('__ADDRES__', address);
+                      });
+
+                      $.map(datas, function (value, index) {
                         datas[index] = value.replace('__TOWN__', town);
+                      });
+
+                      $.map(datas, function (value, index) {
                         datas[index] = value.replace('__ZIP__', zip);
+                      });
+
+                      $.map(datas, function (value, index) {
                         datas[index] = value.replace('__COUNTRY__', country);
                       });
 
