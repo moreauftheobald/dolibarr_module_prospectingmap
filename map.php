@@ -50,10 +50,7 @@ $socid = GETPOST('socid','int');
 if ($user->societe_id) $socid=$user->societe_id;
 $result = restrictedArea($user,'societe',$socid,'');
 
-$search_sale    = GETPOST("search_sale",'array');
-$search_stcomm  = GETPOST('search_stcomm','array');
-$search_type    = GETPOST('search_type','array');
-$search_state   = GETPOST("search_state",'array');
+$search_categ  = GETPOST('search_stcomm','array');
 
 // Initialize technical object to manage hooks of page. Note that conf->hooks_modules contains array of hook context
 $hookmanager->initHooks(array('prospectmap'));
@@ -76,10 +73,7 @@ if (empty($reshook)) {
     // Did we click on purge search criteria ?
     if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x', 'alpha') || GETPOST('button_removefilter', 'alpha')) // All tests are required to be compatible with all browsers
     {
-        $search_sale = array();
-        $search_stcomm = array();
-        $search_type = array();
-        $search_state = array();
+        $search_categ = array();
     }
 }
 
@@ -87,28 +81,13 @@ if (empty($reshook)) {
  * View
  */
 
-/*
- REM: Rules on permissions to see thirdparties
- Internal or External user + No permission to see customers => See nothing
- Internal user socid=0 + Permission to see ALL customers    => See all thirdparties
- Internal user socid=0 + No permission to see ALL customers => See only thirdparties linked to user that are sale representative
- External user socid=x + Permission to see ALL customers    => Can see only himself
- External user socid=x + No permission to see ALL customers => Can see only himself
- */
-
 $form=new Form($db);
 $formother=new FormOther($db);
 $companystatic=new Societe($db);
 $formcompany=new FormCompany($db);
-$prospectstatic=new Client($db);
-$prospectstatic->client=2;
-$prospectstatic->loadCacheOfProspStatus();
-$formdictionary = new FormDictionary($db);
 
-$stcomm_dictionary = Dictionary::getDictionary($db, 'prospectingmap', 'prospectingmapstcomm');
-$stcomm_dictionary->fetch_lines();
 
-$title = $langs->trans("ProspectingMapMapOfProspects");
+$title = $langs->trans("ProspectingMapMapOfourn");
 
 $sql = "SELECT s.rowid, s.nom as name, s.name_alias, s.town, s.zip, ";
 $sql.= " st.libelle as stcomm, s.fk_stcomm as stcomm_id, s.fk_prospectlevel, s.prefix_comm, s.client, s.fournisseur, s.canvas, s.status as status,";
@@ -124,43 +103,12 @@ $sql.= " FROM ".MAIN_DB_PREFIX."societe as s";
 $sql.= " LEFT JOIN ".MAIN_DB_PREFIX."c_country as country on (country.rowid = s.fk_pays)";
 $sql.= " LEFT JOIN ".MAIN_DB_PREFIX."c_departements as state on (state.rowid = s.fk_departement)";
 $sql.= " LEFT JOIN ".MAIN_DB_PREFIX."prospectingmap_coordinate as pmc on (pmc.fk_soc = s.rowid)";
-if (!empty($search_state)) {
-    $sql .= " ," . MAIN_DB_PREFIX . "c_prospectingmap_region as cpmr";
-    $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "c_prospectingmap_region_cbl_department as cpmrcd on (cpmrcd.fk_line = cpmr.rowid)";
-    $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "c_departements as cpmd on (cpmd.rowid = cpmrcd.fk_target)";
-    $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "c_regions as cr on (cpmd.fk_region = cr.code_region)";
-}
 $sql.= " ,".MAIN_DB_PREFIX."c_stcomm as st";
 // We'll need this table joined to the select in order to filter by sale
-if ($search_sale || (!$user->rights->societe->client->voir && !$socid)) $sql.= ", ".MAIN_DB_PREFIX."societe_commerciaux as sc";
 $sql.= " WHERE s.fk_stcomm = st.id";
 $sql.= " AND s.entity IN (".getEntity('societe').")";
-if ($search_sale || (!$user->rights->societe->client->voir && !$socid)) $sql .= " AND s.rowid = sc.fk_soc";        // Join for the needed table to filter by sale
-if (!$user->rights->societe->client->voir && !$socid)	$sql.= " AND sc.fk_user = " .$user->id;
-if (!empty($search_sale)) $sql .= " AND sc.fk_user IN (" . implode(',', $search_sale) . ")";
-if (!empty($search_state)) {
-    $sql .= 'AND cpmr.rowid IN (' . implode(',', $search_state) . ')';
-    $sql .= 'AND (cpmrcd.fk_target = s.fk_departement OR (cr.fk_pays = s.fk_pays AND s.zip LIKE CONCAT(cpmd.code_departement, \'%\')))';
-}
-// Filter on type of thirdparty
-if (!empty($search_type)) {
-    $types_list = array();
-    foreach ($search_type as $type) {
-        $types_list = array_merge($types_list, explode(';', $type));
-    }
-    $or_stm = array();
-    if (in_array('4', $types_list)) {
-        $types_list = array_diff($types_list, array('4'));
-        $or_stm[] = "s.fournisseur = 1";
-    }
-    if (in_array('0', $types_list)) {
-        $types_list = array_diff($types_list, array('0'));
-        $or_stm[] = "(s.client = 0 AND s.fournisseur = 0)";
-    }
-    if (count($types_list) > 0) $or_stm[] = "s.client IN (".implode(',', $types_list).")";
-    $sql .= ' AND (' . implode(' OR ', $or_stm) . ')';
-}
-if (!empty($search_stcomm)) $sql .= " AND s.fk_stcomm IN (" . implode(',', $search_stcomm) . ")";
+
+if (!empty($search_categ)) $sql .= " AND s.fk_stcomm IN (" . implode(',', $search_stcomm) . ")";
 // Add where from hooks
 $parameters=array();
 $reshook=$hookmanager->executeHooks('printFieldListWhere',$parameters);    // Note that $action and $object may have been modified by hook
@@ -185,49 +133,17 @@ print_barre_liste($title, '', $_SERVER["PHP_SELF"], '', '', '', '', '', $num, 't
 
 $moreforfilter = '';
 
-// Sales representatives
-$moreforfilter.='<div class="divsearchfield">';
-$moreforfilter.=$langs->trans('SalesRepresentatives'). ': ';
-$moreforfilter.=multiselect_javascript_code($search_sale, 'search_sale');
-$save_conf = $conf->use_javascript_ajax;
-$conf->use_javascript_ajax = 0;
-$moreforfilter.=$formother->select_salesrepresentatives('','search_sale',$user, 0, 0, 'minwidth300 maxwidth300');
-$conf->use_javascript_ajax = $save_conf;
-$moreforfilter.='</div>';
-
-// States
-$moreforfilter.='<div class="divsearchfield">';
-$moreforfilter.=$langs->trans('ProspectingMapRegion'). ': ';
-$moreforfilter.=multiselect_javascript_code($search_state, 'search_state');
-$save_conf = $conf->use_javascript_ajax;
-$conf->use_javascript_ajax = 0;
-$moreforfilter.=$formdictionary->select_dictionary('prospectingmap', 'prospectingmapregion', '', 'search_state', '', 'rowid', '{{label}}', array(), array('label'=>'ASC'), 0, array(), 0, 0, 'minwidth300 maxwidth300');
-$conf->use_javascript_ajax = $save_conf;
-$moreforfilter.='</div>';
-
-// Type company
-$moreforfilter.='<div class="divsearchfield">';
-$moreforfilter.=$langs->trans('Type'). ': ';
-$moreforfilter.=multiselect_javascript_code($search_type, 'search_type');
-$moreforfilter.='<select class="flat minwidth300 maxwidth300" id="search_type" name="search_type">';
-if (empty($conf->global->SOCIETE_DISABLE_CUSTOMERS)) $moreforfilter.= '<option value="1;3">'.$langs->trans('Customer').'</option>';
-if (empty($conf->global->SOCIETE_DISABLE_PROSPECTS)) $moreforfilter.= '<option value="2;3">'.$langs->trans('Prospect').'</option>';
-$moreforfilter.='<option value="4">'.$langs->trans('Supplier').'</option>';
-$moreforfilter.='<option value="0">'.$langs->trans('Others').'</option>';
-$moreforfilter.='</select>';
-$moreforfilter.='</div>';
-
 // Prospect status
 $arraystcomm=array();
 foreach($prospectstatic->cacheprospectstatus as $key => $val) {
     $arraystcomm[$val['id']] = ($langs->trans("StatusProspect" . $val['id']) != "StatusProspect" . $val['id'] ? $langs->trans("StatusProspect" . $val['id']) : $val['label']);
 }
 $moreforfilter.='<div class="divsearchfield">';
-$moreforfilter.=$langs->trans('StatusProsp'). ': ';
-$moreforfilter.=multiselect_javascript_code($search_stcomm, 'search_stcomm');
+$moreforfilter.=$langs->trans('suppliercateg'). ': ';
+$moreforfilter.=multiselect_javascript_code($search_categ, 'search_categ');
 $save_conf = $conf->use_javascript_ajax;
 $conf->use_javascript_ajax = 0;
-$moreforfilter.=$form->selectarray('search_stcomm', $arraystcomm, '', 0, 0, 0, '', 0, 0, 0, '','minwidth300 maxwidth300');
+$moreforfilter.=$form->selectarray('search_categ', $arraystcomm, '', 0, 0, 0, '', 0, 0, 0, '','minwidth300 maxwidth300');
 $conf->use_javascript_ajax = $save_conf;
 $moreforfilter.='</div>';
 

@@ -28,6 +28,8 @@ ProspectingMapGetLocation       = Récupérer la localisation
 ProspectingMapRegion            = Région
 ProspectingMapLongitude         = Longitude
 ProspectingMapLatitude          = Latitude
+ProspectingMapMapOfourn  = Carte des fournisseurs
+suppliercateg                   = Categorie de fournisseur
 
 #######################################################################
 # Dictionaries
