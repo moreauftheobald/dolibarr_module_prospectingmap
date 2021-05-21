@@ -20,7 +20,7 @@ ProspectingMapSearchCoordinatesRequestMode      = Mode d'envoi des paramètres d
 #######################################################################
 # General
 #######################################################################
-ProspectingMapMapOfProspects    = Carte de prospection
+ProspectingMapMapOfProspects    = Carte des fournisseurs
 ProspectingMapLocation          = Localisation
 ProspectingMapEditLocation      = Edition manuelle de la localisation
 ProspectingMapEndEditLocation   = Terminer l'édition manuelle de la localisation
@@ -28,7 +28,7 @@ ProspectingMapGetLocation       = Récupérer la localisation
 ProspectingMapRegion            = Région
 ProspectingMapLongitude         = Longitude
 ProspectingMapLatitude          = Latitude
-ProspectingMapMapOfourn  = Carte des fournisseurs
+ProspectingMapMapOfourn         = Carte des fournisseurs
 suppliercateg                   = Categorie de fournisseur
 
 #######################################################################

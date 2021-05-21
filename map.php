@@ -34,11 +34,13 @@ $res=0;
 if (! $res && file_exists("../main.inc.php")) $res=@include '../main.inc.php';			// to work if your module directory is into a subdir of root htdocs directory
 if (! $res && file_exists("../../main.inc.php")) $res=@include '../../main.inc.php';		// to work if your module directory is into a subdir of root htdocs directory
 if (! $res) die("Include of main fails");
-include_once DOL_DOCUMENT_ROOT.'/contact/class/contact.class.php';
-require_once DOL_DOCUMENT_ROOT.'/core/class/html.formother.class.php';
-require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
-require_once DOL_DOCUMENT_ROOT.'/core/class/html.formcompany.class.php';
-require_once DOL_DOCUMENT_ROOT.'/societe/class/client.class.php';
+dol_include_once('/contact/class/contact.class.php');
+dol_include_once('/core/class/html.formother.class.php');
+dol_include_once('/core/lib/company.lib.php');
+dol_include_once('/categories/class/categorie.class.php');
+dol_include_once('/core/lib/company.lib.php');
+dol_include_once('/core/class/html.formcompany.class.php');
+dol_include_once('/societe/class/client.class.php');
 dol_include_once('/prospectingmap/lib/prospectingmap.lib.php');
 dol_include_once('/advancedictionaries/class/html.formdictionary.class.php');
 dol_include_once('/advancedictionaries/class/dictionary.class.php');
@@ -50,7 +52,7 @@ $socid = GETPOST('socid','int');
 if ($user->societe_id) $socid=$user->societe_id;
 $result = restrictedArea($user,'societe',$socid,'');
 
-$search_categ  = GETPOST('search_stcomm','array');
+$search_categ  = GETPOST('search_categ','array');
 
 // Initialize technical object to manage hooks of page. Note that conf->hooks_modules contains array of hook context
 $hookmanager->initHooks(array('prospectmap'));
@@ -85,30 +87,35 @@ $form=new Form($db);
 $formother=new FormOther($db);
 $companystatic=new Societe($db);
 $formcompany=new FormCompany($db);
-
+$categ = New Categorie($db);
 
 $title = $langs->trans("ProspectingMapMapOfourn");
 
 $sql = "SELECT s.rowid, s.nom as name, s.name_alias, s.town, s.zip, ";
-$sql.= " st.libelle as stcomm, s.fk_stcomm as stcomm_id, s.fk_prospectlevel, s.prefix_comm, s.client, s.fournisseur, s.canvas, s.status as status,";
+$sql.= " s.fk_prospectlevel, s.prefix_comm, s.client, s.fournisseur, s.canvas, s.status as status,";
 $sql.= " s.email, s.phone, s.fk_pays,";
 $sql.= " s.address,";
 $sql.= " state.code_departement as state_code, state.nom as state_name,";
+if(!empty($search_categ)){
+	$sql.= " c.color as color, c.rowid as stcomm_id,";
+}
 $sql.= " pmc.longitude, pmc.latitude";
 // Add fields from hooks
 $parameters=array();
 $reshook=$hookmanager->executeHooks('printFieldListSelect',$parameters);    // Note that $action and $object may have been modified by hook
 $sql.=$hookmanager->resPrint;
 $sql.= " FROM ".MAIN_DB_PREFIX."societe as s";
-$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."c_country as country on (country.rowid = s.fk_pays)";
-$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."c_departements as state on (state.rowid = s.fk_departement)";
 $sql.= " LEFT JOIN ".MAIN_DB_PREFIX."prospectingmap_coordinate as pmc on (pmc.fk_soc = s.rowid)";
-$sql.= " ,".MAIN_DB_PREFIX."c_stcomm as st";
+$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."c_departements as state on (state.rowid = s.fk_departement)";
+if(!empty($search_categ)){
+	$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."categorie_fournisseur as cat on (cat.fk_soc = s.rowid)";
+	$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."categorie as c on (cat.fk_categorie = c.rowid)";
+}
 // We'll need this table joined to the select in order to filter by sale
-$sql.= " WHERE s.fk_stcomm = st.id";
-$sql.= " AND s.entity IN (".getEntity('societe').")";
-
-if (!empty($search_categ)) $sql .= " AND s.fk_stcomm IN (" . implode(',', $search_stcomm) . ")";
+$sql.= " WHERE  s.entity IN (".getEntity('societe').")";
+if(!empty($search_categ)){
+	$sql.= "AND  cat.fk_categorie IN (".implode(',', $search_categ).")";
+}
 // Add where from hooks
 $parameters=array();
 $reshook=$hookmanager->executeHooks('printFieldListWhere',$parameters);    // Note that $action and $object may have been modified by hook
@@ -135,8 +142,8 @@ $moreforfilter = '';
 
 // Prospect status
 $arraystcomm=array();
-foreach($prospectstatic->cacheprospectstatus as $key => $val) {
-    $arraystcomm[$val['id']] = ($langs->trans("StatusProspect" . $val['id']) != "StatusProspect" . $val['id'] ? $langs->trans("StatusProspect" . $val['id']) : $val['label']);
+foreach($categ->get_full_arbo('supplier') as $key => $val) {
+    $arraystcomm[$val['id']] = ($langs->trans($val['label']));
 }
 $moreforfilter.='<div class="divsearchfield">';
 $moreforfilter.=$langs->trans('suppliercateg'). ': ';
@@ -200,12 +207,14 @@ while ($obj = $db->fetch_object($resql)) {
         (!empty($companystatic->phone) ? '<br>' . dol_print_phone($companystatic->phone) : '') .
         (!empty($companystatic->email) ? '<br>' . dol_print_email($companystatic->email) : '');
 
+
     // Get Colors
-    //------------------------------
-    if (!isset($stcomm_list[$stcomm_id])) {
-        $stcomm = $stcomm_dictionary->lines[$stcomm_id];
-        $stcomm_list[$stcomm_id] = !empty($stcomm->fields['color']) ? $stcomm->fields['color'] : '#FFFFFF';
-    }
+	//------------------------------
+
+	if (!isset($stcomm_list[$stcomm_id])) {
+		$stcomm_list[$stcomm_id] = !empty($obj->color) ? '#'.$obj->color : '#FFFFFF';
+	}
+
 
     // Coordinates in projection format: "EPSG:3857"
     //------------------------------
@@ -412,6 +421,15 @@ while ($obj = $db->fetch_object($resql)) {
                 popupCloser.click();
             }
         });
+		$(document).ready(function () {
+			<?php
+			foreach ($search_categ as $val){
+				?>
+				document.querySelector('[title="<?php echo $arraystcomm[$val]?>"]').style.backgroundColor="<?php echo $stcomm_list[$val]?>"; 
+				<?php
+			}
+			?>
+		});
     </script>
 <?php
 
